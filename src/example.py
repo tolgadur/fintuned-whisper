@@ -42,7 +42,7 @@ criterion = torch.nn.CrossEntropyLoss()
 
 # Train the model
 model.train()
-for step in range(10):
+for step in range(100):
     # forward pass
     output = model(tokens=input_tks, mel=mel)
 
