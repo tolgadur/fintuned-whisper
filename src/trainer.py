@@ -1,12 +1,27 @@
 from torch.utils.data import DataLoader
 import torch
 import tqdm
+from torch.amp import GradScaler, autocast
+import os
 
 from config import MODEL, DEVICE, PROCESSOR
 from dataset import LibriSpeechDataset
 
 
-def train(batch_size: int = 128, num_epochs: int = 10, learning_rate: float = 1e-4):
+def train(
+    batch_size: int = 16,
+    num_epochs: int = 10,
+    learning_rate: float = 1e-4,
+    use_amp: bool = True,
+):
+    # Create models directory if it doesn't exist
+    os.makedirs("models", exist_ok=True)
+
+    # Set memory management for CUDA
+    if DEVICE == "cuda":
+        torch.cuda.empty_cache()
+        os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:512"
+
     # Load the dataset
     dataset = LibriSpeechDataset()
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
@@ -19,7 +34,11 @@ def train(batch_size: int = 128, num_epochs: int = 10, learning_rate: float = 1e
     # Define the optimizer
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
+    # Initialize gradient scaler for mixed precision training
+    scaler = GradScaler(enabled=use_amp)
+
     for epoch in range(num_epochs):
+        epoch_loss = 0.0
 
         for i, batch in enumerate(
             tqdm.tqdm(dataloader, desc=f"Epoch {epoch+1}/{num_epochs}")
@@ -34,24 +53,37 @@ def train(batch_size: int = 128, num_epochs: int = 10, learning_rate: float = 1e
             tokenized = PROCESSOR(text=transcript, return_tensors="pt", padding=True)
             labels = tokenized.input_ids.to(DEVICE)
 
-            # Forward pass
-            outputs = model(
-                input_features=input_features,
-                attention_mask=attention_mask,
-                labels=labels,
-            )
+            # Forward pass with mixed precision
+            with autocast(enabled=use_amp):
+                outputs = model(
+                    input_features=input_features,
+                    attention_mask=attention_mask,
+                    labels=labels,
+                )
+                loss = outputs.loss
 
-            loss = outputs.loss
-
-            # Backward pass
+            # Backward pass with gradient scaling
             optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
+            scaler.scale(loss).backward()
+            scaler.step(optimizer)
+            scaler.update()
 
-            # Print progress
-            print(f"Epoch [{epoch+1}/{num_epochs}], Loss: {loss.item():.4f}")
+            epoch_loss += loss.item()
 
-    # Save the model
+            print(f"Loss: {loss.item()}")
+
+        # Print epoch summary
+        print(
+            f"Epoch [{epoch+1}/{num_epochs}], "
+            f"Average Loss: {epoch_loss/len(dataloader):.4f}"
+        )
+
+        # Save checkpoint after each epoch
+        torch.save(
+            model.state_dict(), f"models/whisper-tiny-librispeech-epoch-{epoch+1}.pth"
+        )
+
+    # Save the final model
     torch.save(model.state_dict(), "models/whisper-tiny-librispeech.pth")
 
     return model
