@@ -12,3 +12,4 @@ rich
 botocore
 evaluate
 jiwer
+tqdm

@@ -1,8 +1,8 @@
-from utils import example
+from utils import evaluate_on_test
 
 
 def main():
-    example()
+    evaluate_on_test()
 
 
 if __name__ == "__main__":
