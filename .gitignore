@@ -1,2 +1,5 @@
 .DS_Store
 .venv
+data/LibriSpeech/*
+data/*.tar.gz
+src/__pycache__/*

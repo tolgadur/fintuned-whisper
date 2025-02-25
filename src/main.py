@@ -1,5 +1,10 @@
+from dataset import LibriSpeechDataset
+
+
 def main():
-    print("Hello, World!")
+    dataset = LibriSpeechDataset()
+    print(len(dataset))
+    print(dataset[0])
 
 
 if __name__ == "__main__":
