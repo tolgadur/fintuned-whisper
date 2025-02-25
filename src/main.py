@@ -1,5 +1,5 @@
 from trainer import train
-from utils import evaluate_single_datapoint
+from utils import evaluate_single_datapoint, evaluate_librispeech
 
 
 def main():
@@ -7,7 +7,8 @@ def main():
     # train()
 
     print("Evaluating...")
-    evaluate_single_datapoint(model_path="models/whisper-tiny-librispeech.pth")
+    evaluate_librispeech(model_path="models/whisper-tiny-librispeech.pth")
+    # evaluate_single_datapoint(model_path="models/whisper-tiny-librispeech.pth")
 
 
 if __name__ == "__main__":

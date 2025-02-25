@@ -14,7 +14,6 @@ def calculate_wer(predictions, references):
 def evaluate_single_datapoint(model_path: str = None):
     # Load the model
     if model_path:
-        # Use map_location to handle loading models saved on different devices
         MODEL.load_state_dict(torch.load(model_path, map_location=torch.device(DEVICE)))
     MODEL.to(DEVICE)
     MODEL.eval()
@@ -60,7 +59,7 @@ def evaluate_librispeech(
 ):
     # Load the model
     if model_path:
-        MODEL.load_state_dict(torch.load(model_path))
+        MODEL.load_state_dict(torch.load(model_path, map_location=torch.device(DEVICE)))
     MODEL.to(DEVICE)
     MODEL.eval()
 
