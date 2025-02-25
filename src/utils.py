@@ -16,7 +16,9 @@ def example():
     input_features, attention_mask, transcript = dataset[0]
 
     # Generate the transcription.
-    # shape batch_size, mel-spectrogram features, time steps -> [B, 80, T]
+    # shape of input_features: batch_size, mel-spectrogram features, time steps
+    # shape of input_features: [B, 80, T_audio]. In this case [1, 80, 3000].
+    # time steps in the audio vary based on audio length
     predicted_ids = MODEL.generate(
         input_features=input_features,
         language="en",
@@ -25,7 +27,8 @@ def example():
     )
 
     # Decode the transcription
-    # shape batch_size, sequence length of predicted token ids -> [B, T]
+    # shape of predicted_ids: batch_size, sequence length of predicted token ids
+    # shape of predicted_ids: [B, T_text]. In this case [1, 49].
     predicted_transcript = PROCESSOR.decode(predicted_ids[0], skip_special_tokens=True)
 
     # print the transcription
