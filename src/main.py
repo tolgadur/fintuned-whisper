@@ -1,8 +1,8 @@
-from utils import evaluate_on_test
+from utils import evaluate_librispeech
 
 
 def main():
-    evaluate_on_test()
+    evaluate_librispeech()
 
 
 if __name__ == "__main__":

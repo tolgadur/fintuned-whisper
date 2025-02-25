@@ -38,7 +38,7 @@ def example():
     print("WER rate:", wer)
 
 
-def evaluate_on_test(
+def evaluate_librispeech(
     test_splits=["test-clean", "test-other"],
     batch_size=32,
 ):
