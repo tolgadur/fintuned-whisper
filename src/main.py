@@ -3,8 +3,8 @@ from utils import evaluate_single_datapoint
 
 
 def main():
-    print("Training...")
-    train()
+    # print("Training...")
+    # train()
 
     print("Evaluating...")
     evaluate_single_datapoint(model_path="models/whisper-tiny-librispeech.pth")
