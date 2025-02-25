@@ -17,11 +17,6 @@ def train(
     # Create models directory if it doesn't exist
     os.makedirs("models", exist_ok=True)
 
-    # Set memory management for CUDA
-    if DEVICE == "cuda":
-        torch.cuda.empty_cache()
-        os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:512"
-
     # Load the dataset
     dataset = LibriSpeechDataset()
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
@@ -54,7 +49,7 @@ def train(
             labels = tokenized.input_ids.to(DEVICE)
 
             # Forward pass with mixed precision
-            with autocast(enabled=use_amp):
+            with autocast(device_type=DEVICE, enabled=use_amp):
                 outputs = model(
                     input_features=input_features,
                     attention_mask=attention_mask,
@@ -64,9 +59,14 @@ def train(
 
             # Backward pass with gradient scaling
             optimizer.zero_grad()
-            scaler.scale(loss).backward()
-            scaler.step(optimizer)
-            scaler.update()
+
+            if use_amp:
+                scaler.scale(loss).backward()
+                scaler.step(optimizer)
+                scaler.update()
+            else:
+                loss.backward()
+                optimizer.step()
 
             epoch_loss += loss.item()
 
