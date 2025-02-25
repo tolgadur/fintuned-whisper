@@ -84,6 +84,10 @@ def evaluate_librispeech(
                 # Squeeze out the channel dimension (converting from [B,1,80,T] to [B,80,T])
                 input_features = input_features.squeeze(1)
 
+                # Move tensors to the same device as the model
+                input_features = input_features.to(DEVICE)
+                attention_mask = attention_mask.to(DEVICE)
+
                 # Generate the transcriptions
                 predicted_ids = MODEL.generate(
                     input_features=input_features,
