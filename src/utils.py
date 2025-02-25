@@ -1,5 +1,5 @@
 import evaluate
-from config import MODEL, PROCESSOR
+from config import MODEL, PROCESSOR, DEVICE
 from dataset import LibriSpeechDataset
 import torch
 from torch.utils.data import DataLoader
@@ -11,9 +11,20 @@ def calculate_wer(predictions, references):
     return wer.compute(predictions=predictions, references=references)
 
 
-def example():
+def evaluate_single_datapoint(model_path: str = None):
+    # Load the model
+    if model_path:
+        MODEL.load_state_dict(torch.load(model_path))
+    MODEL.to(DEVICE)
+    MODEL.eval()
+
+    # Load the dataset
     dataset = LibriSpeechDataset()
     input_features, attention_mask, transcript = dataset[0]
+
+    # Move tensors to the correct device
+    input_features = input_features.to(DEVICE)
+    attention_mask = attention_mask.to(DEVICE)
 
     # Generate the transcription.
     # shape of input_features: batch_size, mel-spectrogram features, time steps
@@ -44,8 +55,12 @@ def example():
 def evaluate_librispeech(
     test_splits=["test-clean", "test-other"],
     batch_size=32,
+    model_path: str = None,
 ):
-    # Set model to evaluation mode
+    # Load the model
+    if model_path:
+        MODEL.load_state_dict(torch.load(model_path))
+    MODEL.to(DEVICE)
     MODEL.eval()
 
     # evaluate on test splits

@@ -14,6 +14,7 @@ class LibriSpeechDataset(torch.utils.data.Dataset):
         self.dataset = torchaudio.datasets.LIBRISPEECH(
             "./data", url=split, download=True
         )
+        # self.dataset = torch.utils.data.Subset(self.dataset, range(1))  # for testing
 
     def __len__(self):
         return len(self.dataset)

@@ -4,3 +4,4 @@ data/LibriSpeech/*
 data/*.tar.gz
 src/__pycache__/*
 .conda/*
+models/*
