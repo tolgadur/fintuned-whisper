@@ -6,7 +6,7 @@ from config import MODEL, DEVICE, PROCESSOR
 from dataset import LibriSpeechDataset
 
 
-def train(batch_size: int = 32, num_epochs: int = 10, learning_rate: float = 1e-4):
+def train(batch_size: int = 128, num_epochs: int = 10, learning_rate: float = 1e-4):
     # Load the dataset
     dataset = LibriSpeechDataset()
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
