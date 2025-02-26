@@ -31,6 +31,8 @@ def load_model(model_path=None):
             # Load the LoRA model
             model = MODEL.to(DEVICE)
             model = PeftModel.from_pretrained(model, model_path)
+            # Merge the LoRA weights for inference
+            model = model.merge_and_unload()
         else:
             print(f"Loading standard model from {model_path}")
             model_state = torch.load(model_path, map_location=torch.device(DEVICE))
@@ -44,6 +46,20 @@ def load_model(model_path=None):
 
 
 def calculate_wer(predictions, references):
+    """
+    Calculate Word Error Rate, ignoring case differences.
+
+    Args:
+        predictions: List of predicted transcripts
+        references: List of reference transcripts
+
+    Returns:
+        WER score (lower is better, 0 is perfect)
+    """
+    # Convert all texts to lowercase for case-insensitive comparison
+    predictions = [p.lower() for p in predictions]
+    references = [r.lower() for r in references]
+
     wer = evaluate.load("wer")
     return wer.compute(predictions=predictions, references=references)
 
@@ -69,6 +85,14 @@ def evaluate_single_datapoint(model_path: str = None):
         language="en",
         task="transcribe",
         attention_mask=attention_mask,
+        # Add these parameters to improve generation
+        do_sample=False,
+        max_length=128,
+        num_beams=5,
+        # Force generation in English
+        forced_decoder_ids=PROCESSOR.get_decoder_prompt_ids(
+            language="en", task="transcribe"
+        ),
     )
 
     # Decode the transcription
@@ -112,9 +136,10 @@ def evaluate_librispeech(
                 # Extract data from batch
                 input_features, attention_mask, transcripts = batch
 
-                input_features.to(DEVICE)
-                attention_mask.to(DEVICE)
-                transcripts.to(DEVICE)
+                # Properly move tensors to device
+                input_features = input_features.to(DEVICE)
+                attention_mask = attention_mask.to(DEVICE)
+                transcripts = transcripts.to(DEVICE)
 
                 # Generate the transcriptions
                 predicted_ids = model.generate(
@@ -122,6 +147,13 @@ def evaluate_librispeech(
                     language="en",
                     task="transcribe",
                     attention_mask=attention_mask,
+                    # Add consistent generation parameters
+                    do_sample=False,
+                    max_length=128,
+                    num_beams=5,
+                    forced_decoder_ids=PROCESSOR.get_decoder_prompt_ids(
+                        language="en", task="transcribe"
+                    ),
                 )
 
                 # Decode the transcriptions
@@ -202,6 +234,14 @@ def evaluate_out_of_sample(model_path: str = None):
             language="en",
             task="transcribe",
             attention_mask=attention_mask,
+            # Add these parameters to improve generation
+            do_sample=False,
+            max_length=128,
+            num_beams=5,
+            # Force generation in English
+            forced_decoder_ids=PROCESSOR.get_decoder_prompt_ids(
+                language="en", task="transcribe"
+            ),
         )
 
         # Decode the transcription

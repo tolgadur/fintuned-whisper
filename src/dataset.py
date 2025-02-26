@@ -23,6 +23,10 @@ class LibriSpeechDataset(torch.utils.data.Dataset):
         waveform, sample_rate, transcript, _, _, _ = self.dataset[index]
         waveform_np = waveform.squeeze().numpy()
 
+        # Normalize transcript for consistency
+        # Convert to lowercase and strip whitespace for consistent casing and formatting
+        transcript = transcript.strip().lower()
+
         # Process the audio. Returns a log-mel spectrogram.
         # Applied STFT, padding, mel filter bank, and log compression.
         features = self.processor(
@@ -55,6 +59,7 @@ def collate_fn(batch):
     input_features = torch.stack(input_features, dim=0)
     attention_mask = torch.stack(attention_mask, dim=0)
 
+    # Transcripts are already normalized in __getitem__
     tokenized = PROCESSOR(text=transcripts, return_tensors="pt", padding=True)
     labels = tokenized.input_ids
 

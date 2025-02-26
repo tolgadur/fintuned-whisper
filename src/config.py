@@ -9,7 +9,6 @@ def load_processor(model_name: str = "openai/whisper-tiny"):
 
 def load_new_model(model_name: str = "openai/whisper-tiny"):
     model = WhisperForConditionalGeneration.from_pretrained(model_name)
-    model.config.forced_decoder_ids = None
     model.config.use_cache = False
     return model
 
