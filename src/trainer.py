@@ -231,7 +231,7 @@ def train_lora_kd(
         learning_rate=learning_rate,
         num_train_epochs=num_epochs,
         logging_steps=10,
-        save_strategy="no",
+        save_strategy="epoch",
         fp16=use_amp and DEVICE == "cuda",
         report_to="none",
     )

@@ -8,7 +8,7 @@ def main():
     # train(num_epochs=10, batch_size=1)
 
     # print("Training with LoRA and KL divergence...")
-    train_lora_kd(num_epochs=10)
+    train_lora_kd(num_epochs=5)
 
     # Comment out the following line to evaluate the single datapoint
     # evaluate_single_datapoint(model_path="models/whisper-tiny-lora-kd")
