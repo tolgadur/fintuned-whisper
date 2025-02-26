@@ -14,7 +14,7 @@ class LibriSpeechDataset(torch.utils.data.Dataset):
         self.dataset = torchaudio.datasets.LIBRISPEECH(
             "./data", url=split, download=True
         )
-        # self.dataset = torch.utils.data.Subset(self.dataset, range(1))  # for testing
+        # self.dataset = torch.utils.data.Subset(self.dataset, range(2))  # for testing
 
     def __len__(self):
         return len(self.dataset)
@@ -31,18 +31,36 @@ class LibriSpeechDataset(torch.utils.data.Dataset):
             return_tensors="pt",
             return_attention_mask=True,
         )
-        # Squeeze the batch dimension (dim=0) added by the processor
-        input_features = features.input_features.squeeze(0)  # Shape: [80, T]
-        attention_mask = features.attention_mask.squeeze(0)  # Shape: [T]
+        # Remove the batch dimension (first dimension) as DataLoader will add it back
+        input_features = features.input_features.squeeze(0)  # Remove batch dimension
+        attention_mask = features.attention_mask.squeeze(0)  # Remove batch dimension
 
-        # Tokenize the transcript
-        tokenized = self.processor(text=transcript, return_tensors="pt", padding=True)
-        # Squeeze the batch dimension (dim=0) added by the processor
-        labels = tokenized.input_ids.squeeze(0)  # Shape: [S] where S is sequence length
+        return input_features, attention_mask, transcript
 
-        return {
-            "input_features": input_features,  # Shape: [80, T]
-            "attention_mask": attention_mask,  # Shape: [1, T]
-            "labels": labels,  # Shape: [S]
-            "transcript": transcript,
-        }
+
+def collate_fn(batch):
+    """
+    Process a batch of raw audio data for the Whisper model.
+
+    Args:
+        batch: A list of tuples (input_features, attention_mask, transcript)
+
+    Returns:
+        A dictionary with processed features ready for the model
+    """
+    input_features, attention_mask, transcripts = zip(*batch)
+
+    # Stack the input features and attention masks into single batch tensors
+    # Each item should be a 2D tensor, and we're stacking along a new first dimension
+    input_features = torch.stack(input_features, dim=0)
+    attention_mask = torch.stack(attention_mask, dim=0)
+
+    tokenized = PROCESSOR(text=transcripts, return_tensors="pt", padding=True)
+    labels = tokenized.input_ids
+
+    return {
+        "input_features": input_features,
+        "attention_mask": attention_mask,
+        "labels": labels,
+        "transcript": transcripts,
+    }

@@ -5,12 +5,13 @@ from utils import evaluate_out_of_sample, evaluate_single_datapoint
 def main():
     # Uncomment the training method you want to use
     # print("Training with standard fine-tuning...")
-    # train(num_epochs=10, batch_size=1)
+    # train(num_epochs=5)
 
     # print("Training with LoRA and KL divergence...")
     train_lora_kd(num_epochs=5)
 
     # Comment out the following line to evaluate the single datapoint
+    # evaluate_single_datapoint(model_path="models/whisper-tiny-librispeech.pth")
     # evaluate_single_datapoint(model_path="models/whisper-tiny-lora-kd")
 
     # print("Evaluating...")

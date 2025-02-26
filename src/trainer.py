@@ -3,12 +3,12 @@ import torch
 import tqdm
 from torch.amp import GradScaler, autocast
 import os
-from peft import LoraConfig, get_peft_model, TaskType
+from peft import LoraConfig, get_peft_model
 import torch.nn.functional as F
 from transformers import Trainer, TrainingArguments
 
 from config import MODEL, DEVICE
-from dataset import LibriSpeechDataset
+from dataset import LibriSpeechDataset, collate_fn
 from config import load_new_model
 
 
@@ -23,7 +23,12 @@ def train(
 
     # Load the dataset
     dataset = LibriSpeechDataset()
-    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
+    dataloader = DataLoader(
+        dataset,
+        batch_size=batch_size,
+        shuffle=True,
+        collate_fn=collate_fn,
+    )
     print(f"Loaded {len(dataset)} samples")
 
     # Load the model
@@ -243,6 +248,7 @@ def train_lora_kd(
         kd_weight=kd_weight,
         args=training_args,
         train_dataset=dataset,
+        data_collator=collate_fn,
     )
 
     # Train the model

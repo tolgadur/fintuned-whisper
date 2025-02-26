@@ -54,12 +54,11 @@ def evaluate_single_datapoint(model_path: str = None):
 
     # Load the dataset
     dataset = LibriSpeechDataset()
-    batch = dataset[0]
+    input_features, attention_mask, transcript = dataset[0]
 
     # Extract data from batch
-    input_features = batch["input_features"].unsqueeze(0).to(DEVICE)
-    attention_mask = batch["attention_mask"].unsqueeze(0).to(DEVICE)
-    transcript = batch["transcript"]
+    input_features = input_features.unsqueeze(0).to(DEVICE)
+    attention_mask = attention_mask.unsqueeze(0).to(DEVICE)
 
     # Generate the transcription.
     # shape of input_features: batch_size, mel-spectrogram features, time steps
@@ -111,9 +110,11 @@ def evaluate_librispeech(
         with torch.no_grad():
             for batch in tqdm(dataloader, desc=f"Processing {split}"):
                 # Extract data from batch
-                input_features = batch["input_features"].to(DEVICE)
-                attention_mask = batch["attention_mask"].to(DEVICE)
-                transcripts = batch["transcript"]
+                input_features, attention_mask, transcripts = batch
+
+                input_features.to(DEVICE)
+                attention_mask.to(DEVICE)
+                transcripts.to(DEVICE)
 
                 # Generate the transcriptions
                 predicted_ids = model.generate(
