@@ -139,7 +139,7 @@ def evaluate_librispeech(
                 # Properly move tensors to device
                 input_features = input_features.to(DEVICE)
                 attention_mask = attention_mask.to(DEVICE)
-                transcripts = transcripts.to(DEVICE)
+                # transcripts is a tuple of strings, can't be moved to a device
 
                 # Generate the transcriptions
                 predicted_ids = model.generate(
