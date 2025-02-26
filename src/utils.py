@@ -6,6 +6,41 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 import torchaudio
 import os
+from peft import PeftModel
+
+
+def load_model(model_path=None):
+    """
+    Load a model from a checkpoint, handling both standard and LoRA models.
+
+    Args:
+        model_path: Path to the model checkpoint. If None, returns the base model.
+
+    Returns:
+        The loaded model on the correct device.
+    """
+    if model_path:
+        # Check if this is a LoRA model
+        adapter_path = os.path.join(model_path, "adapter_config.json")
+        is_dir = os.path.isdir(model_path)
+        has_adapter = os.path.exists(adapter_path)
+        is_lora_model = is_dir and has_adapter
+
+        if is_lora_model:
+            print(f"Loading LoRA model from {model_path}")
+            # Load the LoRA model
+            model = MODEL.to(DEVICE)
+            model = PeftModel.from_pretrained(model, model_path)
+        else:
+            print(f"Loading standard model from {model_path}")
+            model_state = torch.load(model_path, map_location=torch.device(DEVICE))
+            MODEL.load_state_dict(model_state)
+            model = MODEL.to(DEVICE)
+    else:
+        model = MODEL.to(DEVICE)
+
+    model.eval()
+    return model
 
 
 def calculate_wer(predictions, references):
@@ -15,24 +50,22 @@ def calculate_wer(predictions, references):
 
 def evaluate_single_datapoint(model_path: str = None):
     # Load the model
-    if model_path:
-        MODEL.load_state_dict(torch.load(model_path, map_location=torch.device(DEVICE)))
-    MODEL.to(DEVICE)
-    MODEL.eval()
+    model = load_model(model_path)
 
     # Load the dataset
     dataset = LibriSpeechDataset()
-    input_features, attention_mask, transcript = dataset[0]
+    batch = dataset[0]
 
-    # Move tensors to the correct device
-    input_features = input_features.to(DEVICE)
-    attention_mask = attention_mask.to(DEVICE)
+    # Extract data from batch
+    input_features = batch["input_features"].unsqueeze(0).to(DEVICE)
+    attention_mask = batch["attention_mask"].unsqueeze(0).to(DEVICE)
+    transcript = batch["transcript"]
 
     # Generate the transcription.
     # shape of input_features: batch_size, mel-spectrogram features, time steps
     # shape of input_features: [B, 80, T_audio]. In this case [1, 80, 3000].
     # time steps in the audio vary based on audio length
-    predicted_ids = MODEL.generate(
+    predicted_ids = model.generate(
         input_features=input_features,
         language="en",
         task="transcribe",
@@ -44,12 +77,11 @@ def evaluate_single_datapoint(model_path: str = None):
     # shape of predicted_ids: [B, T_text]. In this case [1, 49].
     predicted_transcript = PROCESSOR.decode(predicted_ids[0], skip_special_tokens=True)
 
-    # print the transcription
+    # Print the transcription
     print("Whisper transcription:", predicted_transcript)
     print("Original transcript:", transcript)
 
     # WER rate calculation
-    MODEL.eval()
     wer = calculate_wer([predicted_transcript], [transcript])
     print("WER rate:", wer)
 
@@ -60,12 +92,9 @@ def evaluate_librispeech(
     model_path: str = None,
 ):
     # Load the model
-    if model_path:
-        MODEL.load_state_dict(torch.load(model_path, map_location=torch.device(DEVICE)))
-    MODEL.to(DEVICE)
-    MODEL.eval()
+    model = load_model(model_path)
 
-    # evaluate on test splits
+    # Evaluate on test splits
     for split in test_splits:
         print(f"\nEvaluating on {split} split:")
         dataset = LibriSpeechDataset(split=split)
@@ -81,24 +110,20 @@ def evaluate_librispeech(
         # Use torch.no_grad() to disable gradient calculation during evaluation
         with torch.no_grad():
             for batch in tqdm(dataloader, desc=f"Processing {split}"):
-                input_features, attention_mask, transcripts = batch
-
-                # Squeeze out the channel dimension (converting from [B,1,80,T] to [B,80,T])
-                input_features = input_features.squeeze(1)
-
-                # Move tensors to the same device as the model
-                input_features = input_features.to(DEVICE)
-                attention_mask = attention_mask.to(DEVICE)
+                # Extract data from batch
+                input_features = batch["input_features"].to(DEVICE)
+                attention_mask = batch["attention_mask"].to(DEVICE)
+                transcripts = batch["transcript"]
 
                 # Generate the transcriptions
-                predicted_ids = MODEL.generate(
+                predicted_ids = model.generate(
                     input_features=input_features,
                     language="en",
                     task="transcribe",
                     attention_mask=attention_mask,
                 )
 
-                # Decode the transcriptions (try direct decoding first)
+                # Decode the transcriptions
                 predicted_transcripts = PROCESSOR.batch_decode(
                     predicted_ids, skip_special_tokens=True
                 )
@@ -123,10 +148,7 @@ def evaluate_out_of_sample(model_path: str = None):
         model_path: Optional path to a saved model checkpoint
     """
     # Load the model
-    if model_path:
-        MODEL.load_state_dict(torch.load(model_path, map_location=torch.device(DEVICE)))
-    MODEL.to(DEVICE)
-    MODEL.eval()
+    model = load_model(model_path)
 
     # Define the audio files and their expected transcripts
     samples = [
@@ -174,29 +196,28 @@ def evaluate_out_of_sample(model_path: str = None):
         attention_mask = features.attention_mask.to(DEVICE)
 
         # Generate the transcription
-        with torch.no_grad():
-            predicted_ids = MODEL.generate(
-                input_features=input_features,
-                language="en",
-                task="transcribe",
-                attention_mask=attention_mask,
-            )
+        predicted_ids = model.generate(
+            input_features=input_features,
+            language="en",
+            task="transcribe",
+            attention_mask=attention_mask,
+        )
 
         # Decode the transcription
         predicted_transcript = PROCESSOR.decode(
             predicted_ids[0], skip_special_tokens=True
         )
-
         print(f"Predicted transcript: {predicted_transcript}")
 
-        # Store for WER calculation
+        # Calculate WER
+        wer_score = calculate_wer([predicted_transcript], [expected_transcript])
+        print(f"WER: {wer_score}")
+
         predictions.append(predicted_transcript)
         references.append(expected_transcript)
-
-        # Calculate individual WER
-        individual_wer = calculate_wer([predicted_transcript], [expected_transcript])
-        print(f"WER: {individual_wer}")
 
     # Calculate overall WER
     overall_wer = calculate_wer(predictions, references)
     print(f"\nOverall WER for out-of-sample audio: {overall_wer}")
+
+    return overall_wer

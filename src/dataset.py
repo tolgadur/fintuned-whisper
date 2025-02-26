@@ -31,7 +31,18 @@ class LibriSpeechDataset(torch.utils.data.Dataset):
             return_tensors="pt",
             return_attention_mask=True,
         )
-        input_features = features.input_features
-        attention_mask = features.attention_mask
+        # Squeeze the batch dimension (dim=0) added by the processor
+        input_features = features.input_features.squeeze(0)  # Shape: [80, T]
+        attention_mask = features.attention_mask.squeeze(0)  # Shape: [T]
 
-        return input_features, attention_mask, transcript
+        # Tokenize the transcript
+        tokenized = self.processor(text=transcript, return_tensors="pt", padding=True)
+        # Squeeze the batch dimension (dim=0) added by the processor
+        labels = tokenized.input_ids.squeeze(0)  # Shape: [S] where S is sequence length
+
+        return {
+            "input_features": input_features,  # Shape: [80, T]
+            "attention_mask": attention_mask,  # Shape: [1, T]
+            "labels": labels,  # Shape: [S]
+            "transcript": transcript,
+        }

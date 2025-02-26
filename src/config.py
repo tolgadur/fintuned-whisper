@@ -3,11 +3,19 @@ import torch
 from transformers import WhisperProcessor, WhisperForConditionalGeneration
 
 
-MODEL_NAME = "openai/whisper-tiny"
+def load_processor(model_name: str = "openai/whisper-tiny"):
+    return WhisperProcessor.from_pretrained(model_name)
 
-PROCESSOR = WhisperProcessor.from_pretrained(MODEL_NAME)
-MODEL = WhisperForConditionalGeneration.from_pretrained(MODEL_NAME)
-MODEL.config.forced_decoder_ids = None
+
+def load_new_model(model_name: str = "openai/whisper-tiny"):
+    model = WhisperForConditionalGeneration.from_pretrained(model_name)
+    model.config.forced_decoder_ids = None
+    model.config.use_cache = False
+    return model
+
+
+PROCESSOR = load_processor()
+MODEL = load_new_model()
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 if DEVICE == "cuda":
