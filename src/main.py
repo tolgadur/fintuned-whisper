@@ -66,9 +66,9 @@ def main():
     # print("-" * 100)
 
     # In sample evaluation
-    # print("Evaluating LibriSpeech dataset no finetuning")
-    # evaluate_librispeech()
-    # print("-" * 100)
+    print("Evaluating LibriSpeech dataset no finetuning")
+    evaluate_librispeech()
+    print("-" * 100)
 
     print("Evaluating LibriSpeech dataset finetuned with one epoch")
     evaluate_librispeech(model_path="models/whisper-tiny-librispeech-epoch-1-2.pth")
