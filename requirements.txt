@@ -15,3 +15,4 @@ jiwer
 tqdm
 peft
 matplotlib
+tensorboard
