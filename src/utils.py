@@ -4,6 +4,8 @@ from dataset import LibriSpeechDataset
 import torch
 from torch.utils.data import DataLoader
 from tqdm import tqdm
+import torchaudio
+import os
 
 
 def calculate_wer(predictions, references):
@@ -111,3 +113,90 @@ def evaluate_librispeech(
         # Calculate WER for this split
         wer = calculate_wer(predictions, references)
         print(f"WER rate for {split}: {wer}")
+
+
+def evaluate_out_of_sample(model_path: str = None):
+    """
+    Evaluate the model on custom audio samples.
+
+    Args:
+        model_path: Optional path to a saved model checkpoint
+    """
+    # Load the model
+    if model_path:
+        MODEL.load_state_dict(torch.load(model_path, map_location=torch.device(DEVICE)))
+    MODEL.to(DEVICE)
+    MODEL.eval()
+
+    # Define the audio files and their expected transcripts
+    samples = [
+        {"path": "data/hello-izaak.wav", "transcript": "Hello, my name is Izaak"},
+        {"path": "data/hello-tolga.wav", "transcript": "Hello, my name is Tolga"},
+    ]
+
+    predictions = []
+    references = []
+
+    print("\nEvaluating out-of-sample audio files:")
+
+    # Process each sample
+    for sample in samples:
+        file_path = sample["path"]
+        expected_transcript = sample["transcript"]
+
+        print(f"\nProcessing: {os.path.basename(file_path)}")
+        print(f"Expected transcript: {expected_transcript}")
+
+        # Load and process the audio
+        waveform, sample_rate = torchaudio.load(file_path)
+
+        # Resample to 16000 Hz if needed
+        target_sample_rate = 16000
+        if sample_rate != target_sample_rate:
+            print(f"Resampling from {sample_rate} Hz to {target_sample_rate} Hz")
+            resampler = torchaudio.transforms.Resample(
+                orig_freq=sample_rate, new_freq=target_sample_rate
+            )
+            waveform = resampler(waveform)
+            sample_rate = target_sample_rate
+
+        waveform_np = waveform.squeeze().numpy()
+
+        # Process the audio to get input features
+        features = PROCESSOR(
+            waveform_np,
+            sampling_rate=sample_rate,
+            return_tensors="pt",
+            return_attention_mask=True,
+        )
+
+        input_features = features.input_features.to(DEVICE)
+        attention_mask = features.attention_mask.to(DEVICE)
+
+        # Generate the transcription
+        with torch.no_grad():
+            predicted_ids = MODEL.generate(
+                input_features=input_features,
+                language="en",
+                task="transcribe",
+                attention_mask=attention_mask,
+            )
+
+        # Decode the transcription
+        predicted_transcript = PROCESSOR.decode(
+            predicted_ids[0], skip_special_tokens=True
+        )
+
+        print(f"Predicted transcript: {predicted_transcript}")
+
+        # Store for WER calculation
+        predictions.append(predicted_transcript)
+        references.append(expected_transcript)
+
+        # Calculate individual WER
+        individual_wer = calculate_wer([predicted_transcript], [expected_transcript])
+        print(f"WER: {individual_wer}")
+
+    # Calculate overall WER
+    overall_wer = calculate_wer(predictions, references)
+    print(f"\nOverall WER for out-of-sample audio: {overall_wer}")

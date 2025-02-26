@@ -1,5 +1,5 @@
 from trainer import train
-from utils import evaluate_single_datapoint, evaluate_librispeech
+from utils import evaluate_out_of_sample
 
 
 def main():
@@ -7,8 +7,17 @@ def main():
     # train()
 
     print("Evaluating...")
-    evaluate_librispeech(model_path="models/whisper-tiny-librispeech.pth")
-    # evaluate_single_datapoint(model_path="models/whisper-tiny-librispeech.pth")
+    print("Evaluating regular non-fined tuned model")
+    evaluate_out_of_sample()
+    print("-" * 100)
+
+    print("Evaluating model finetuned with one epoch")
+    evaluate_out_of_sample(model_path="models/whisper-tiny-librispeech.pth")
+    print("-" * 100)
+
+    print("Evaluating model finetuned with five epochs")
+    evaluate_out_of_sample(model_path="models/whisper-tiny-librispeech-epoch-4.pth")
+    print("-" * 100)
 
 
 if __name__ == "__main__":

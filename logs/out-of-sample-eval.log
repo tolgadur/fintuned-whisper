@@ -1,0 +1,55 @@
+Evaluating...
+Evaluating regular non-fined tuned model
+
+Evaluating out-of-sample audio files:
+
+Processing: hello-izaak.wav
+Expected transcript: Hello, my name is Izaak
+Resampling from 48000 Hz to 16000 Hz
+Predicted transcript:  Hello, my name's Isaac.
+WER: 0.6
+
+Processing: hello-tolga.wav
+Expected transcript: Hello, my name is Tolga
+Resampling from 48000 Hz to 16000 Hz
+Predicted transcript:  Hello, my name is Tolga.
+WER: 0.2
+
+Overall WER for out-of-sample audio: 0.4
+----------------------------------------------------------------------------------------------------
+Evaluating model finetuned with one epoch
+
+Evaluating out-of-sample audio files:
+
+Processing: hello-izaak.wav
+Expected transcript: Hello, my name is Izaak
+Resampling from 48000 Hz to 16000 Hz
+Predicted transcript: HELLO MY MAIMS ISICK
+WER: 1.0
+
+Processing: hello-tolga.wav
+Expected transcript: Hello, my name is Tolga
+Resampling from 48000 Hz to 16000 Hz
+Predicted transcript: HELLOW MY LAME IS TOLD OF
+WER: 1.2
+
+Overall WER for out-of-sample audio: 1.1
+----------------------------------------------------------------------------------------------------
+Evaluating model finetuned with five epochs
+
+Evaluating out-of-sample audio files:
+
+Processing: hello-izaak.wav
+Expected transcript: Hello, my name is Izaak
+Resampling from 48000 Hz to 16000 Hz
+Predicted transcript: RELUR REMAINED OISICK
+WER: 1.0
+
+Processing: hello-tolga.wav
+Expected transcript: Hello, my name is Tolga
+Resampling from 48000 Hz to 16000 Hz
+Predicted transcript: HELO MY MALE IS TOLD
+WER: 1.0
+
+Overall WER for out-of-sample audio: 1.0
+----------------------------------------------------------------------------------------------------
