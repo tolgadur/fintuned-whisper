@@ -1,4 +1,4 @@
-from trainer import train, train_lora_ewc_kd
+from trainer import train, train_lora_ewc_kd, train_lora_simple
 from utils import (
     evaluate_out_of_sample,
     evaluate_librispeech,
@@ -17,6 +17,9 @@ def main():
     #     learning_rate=1e-4,
     #     use_amp=True,
     # )
+
+    print("Training with LoRA simple...")
+    train_lora_simple()
 
     # # Training with LoRA, EWC and KL divergence - recommended approach
     # print("Training with LoRA, EWC and KL divergence...")
@@ -66,29 +69,29 @@ def main():
     # print("-" * 100)
 
     # In sample evaluation
-    print("Evaluating LibriSpeech dataset no finetuning")
-    evaluate_librispeech()
-    print("-" * 100)
+    # print("Evaluating LibriSpeech dataset no finetuning")
+    # evaluate_librispeech()
+    # print("-" * 100)
 
-    print("Evaluating LibriSpeech dataset finetuned with one epoch")
-    evaluate_librispeech(model_path="models/whisper-tiny-librispeech-epoch-1-2.pth")
-    print("-" * 100)
+    # print("Evaluating LibriSpeech dataset finetuned with one epoch")
+    # evaluate_librispeech(model_path="models/whisper-tiny-librispeech-epoch-1-2.pth")
+    # print("-" * 100)
 
-    print("Evaluating LibriSpeech dataset finetuned with five epochs")
-    evaluate_librispeech(model_path="models/whisper-tiny-librispeech-epoch-4.pth")
-    print("-" * 100)
+    # print("Evaluating LibriSpeech dataset finetuned with five epochs")
+    # evaluate_librispeech(model_path="models/whisper-tiny-librispeech-epoch-4.pth")
+    # print("-" * 100)
 
-    print(
-        "Evaluating LibriSpeech dataset finetuned with LoRA and KL divergence five epochs"
-    )
-    evaluate_librispeech(model_path="models/whisper-tiny-lora-kd")
-    print("-" * 100)
+    # print(
+    #     "Evaluating LibriSpeech dataset finetuned with LoRA and KL divergence five epochs"
+    # )
+    # evaluate_librispeech(model_path="models/whisper-tiny-lora-kd")
+    # print("-" * 100)
 
-    print(
-        "Evaluating LibriSpeech dataset finetuned with LoRA, KL divergence, and EWC combined"
-    )
-    evaluate_librispeech(model_path="models/whisper-tiny-lora-kd-ewc-2")
-    print("-" * 100)
+    # print(
+    #     "Evaluating LibriSpeech dataset finetuned with LoRA, KL divergence, and EWC combined"
+    # )
+    # evaluate_librispeech(model_path="models/whisper-tiny-lora-kd-ewc-2")
+    # print("-" * 100)
 
 
 if __name__ == "__main__":

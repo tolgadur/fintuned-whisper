@@ -372,3 +372,83 @@ def train_lora_ewc_kd(
     # Save the LoRA model properly
     student_model.save_pretrained(output_dir)
     return student_model
+
+
+def train_lora_simple(
+    batch_size: int = 1,
+    num_epochs: int = 8,
+    learning_rate: float = 1e-4,
+    use_amp: bool = True,
+    lora_r: int = 8,
+    lora_alpha: int = 16,
+    lora_dropout: float = 0.1,
+):
+    """
+    Train the model using plain LoRA fine-tuning with the standard Hugging Face Trainer.
+
+    Args:
+        batch_size: Batch size for training
+        num_epochs: Number of epochs to train
+        learning_rate: Learning rate for optimizer
+        use_amp: Whether to use automatic mixed precision
+        lora_r: Rank of the LoRA update matrices
+        lora_alpha: LoRA scaling factor
+        lora_dropout: Dropout probability for LoRA layers
+        target_modules: List of modules to apply LoRA to
+    """
+    # Create output directory
+    output_dir = f"models/whisper-lora-r{lora_r}"
+    os.makedirs(output_dir, exist_ok=True)
+
+    # Load dataset
+    dataset = LibriSpeechDataset()
+    print(f"Loaded {len(dataset)} samples")
+
+    # Load model for fine-tuning
+    model = load_new_model().to(DEVICE)
+
+    # Configure LoRA
+    lora_config = LoraConfig(
+        r=lora_r,
+        lora_alpha=lora_alpha,
+        lora_dropout=lora_dropout,
+        target_modules=["q_proj", "v_proj"],
+        bias="none",  # Don't train bias parameters
+        task_type="SEQ_2_SEQ_LM",  # Task type for seq2seq models like Whisper
+    )
+
+    # Apply LoRA to the model
+    model = get_peft_model(model, lora_config)
+
+    # Print trainable parameters info
+    model.print_trainable_parameters()
+
+    # Define training arguments using Hugging Face's TrainingArguments
+    training_args = TrainingArguments(
+        output_dir=output_dir,
+        per_device_train_batch_size=batch_size,
+        gradient_accumulation_steps=1,
+        learning_rate=learning_rate,
+        num_train_epochs=num_epochs,
+        fp16=use_amp and DEVICE == "cuda",
+        logging_steps=50,
+        save_strategy="no",  # Don't save checkpoints during training
+        report_to="tensorboard",
+        remove_unused_columns=False,  # Important for audio models
+    )
+
+    # Create standard Trainer
+    trainer = Trainer(
+        model=model,
+        args=training_args,
+        train_dataset=dataset,
+        data_collator=collate_fn,
+    )
+
+    # Train the model
+    trainer.train()
+
+    # Save the final model
+    model.save_pretrained(os.path.join(output_dir, "final_model"))
+
+    return model
