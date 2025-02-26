@@ -414,7 +414,6 @@ def train_lora_simple(
         lora_dropout=lora_dropout,
         target_modules=["q_proj", "v_proj"],
         bias="none",  # Don't train bias parameters
-        task_type="SEQ_2_SEQ_LM",  # Task type for seq2seq models like Whisper
     )
 
     # Apply LoRA to the model
