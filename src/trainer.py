@@ -375,8 +375,8 @@ def train_lora_ewc_kd(
 
 
 def train_lora_simple(
-    batch_size: int = 1,
-    num_epochs: int = 8,
+    batch_size: int = 8,
+    num_epochs: int = 1,
     learning_rate: float = 1e-4,
     use_amp: bool = True,
     lora_r: int = 8,
