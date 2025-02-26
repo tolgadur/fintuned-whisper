@@ -6,8 +6,8 @@ Evaluating out-of-sample audio files:
 Processing: hello-izaak.wav
 Expected transcript: Hello, my name is Izaak
 Resampling from 48000 Hz to 16000 Hz
-Predicted transcript:  Hello, my name is Isaac.
-WER: 0.2
+Predicted transcript:  Hello, my name's Isaac.
+WER: 0.6
 
 Processing: hello-tolga.wav
 Expected transcript: Hello, my name is Tolga
@@ -15,26 +15,26 @@ Resampling from 48000 Hz to 16000 Hz
 Predicted transcript:  Hello, my name is Tolga.
 WER: 0.2
 
-Overall WER for out-of-sample audio: 0.2
+Overall WER for out-of-sample audio: 0.4
 ----------------------------------------------------------------------------------------------------
 Evaluating model finetuned with one epoch
-Loading standard model from models/whisper-tiny-librispeech-epoch-1-2.pth
+Loading standard model from models/whisper-tiny-librispeech-epoch-1.pth
 
 Evaluating out-of-sample audio files:
 
 Processing: hello-izaak.wav
 Expected transcript: Hello, my name is Izaak
 Resampling from 48000 Hz to 16000 Hz
-Predicted transcript: hello my name's isic
-WER: 0.8
+Predicted transcript: HELLO MY MAIMS ISICK
+WER: 1.0
 
 Processing: hello-tolga.wav
 Expected transcript: Hello, my name is Tolga
 Resampling from 48000 Hz to 16000 Hz
-Predicted transcript: howl o my name is toga
-WER: 0.6
+Predicted transcript: HELLOW MY LAME IS TOLD OF
+WER: 1.2
 
-Overall WER for out-of-sample audio: 0.7
+Overall WER for out-of-sample audio: 1.1
 ----------------------------------------------------------------------------------------------------
 Evaluating model finetuned with five epochs
 Loading standard model from models/whisper-tiny-librispeech-epoch-4.pth
@@ -44,16 +44,16 @@ Evaluating out-of-sample audio files:
 Processing: hello-izaak.wav
 Expected transcript: Hello, my name is Izaak
 Resampling from 48000 Hz to 16000 Hz
-Predicted transcript: RELOR REMAINED AISICK
+Predicted transcript: RELUR REMAINED OISICK
 WER: 1.0
 
 Processing: hello-tolga.wav
 Expected transcript: Hello, my name is Tolga
 Resampling from 48000 Hz to 16000 Hz
 Predicted transcript: HELO MY MALE IS TOLD
-WER: 0.6
+WER: 1.0
 
-Overall WER for out-of-sample audio: 0.8
+Overall WER for out-of-sample audio: 1.0
 ----------------------------------------------------------------------------------------------------
 Evaluating model finetuned with LoRA and KL divergence five epochs
 Loading LoRA model from models/whisper-tiny-lora-kd
@@ -63,33 +63,33 @@ Evaluating out-of-sample audio files:
 Processing: hello-izaak.wav
 Expected transcript: Hello, my name is Izaak
 Resampling from 48000 Hz to 16000 Hz
-Predicted transcript: RELOR REMAINED AISICK
+Predicted transcript: HOLLOW REMAINED AISICK
 WER: 1.0
 
 Processing: hello-tolga.wav
 Expected transcript: Hello, my name is Tolga
 Resampling from 48000 Hz to 16000 Hz
-Predicted transcript: HULLO MURMAY LITTLE IS TOLD THE
+Predicted transcript: HELO MY MALE IS TOLD
 WER: 1.0
 
 Overall WER for out-of-sample audio: 1.0
 ----------------------------------------------------------------------------------------------------
 Evaluating model finetuned with LoRA, KL divergence, and EWC combined
-Loading LoRA model from models/whisper-tiny-lora-kd-ewc-2
+Loading LoRA model from models/whisper-tiny-lora-kd-ewc
 
 Evaluating out-of-sample audio files:
 
 Processing: hello-izaak.wav
 Expected transcript: Hello, my name is Izaak
 Resampling from 48000 Hz to 16000 Hz
-Predicted transcript: RELOR REMAINED AISICK
+Predicted transcript: RELUR REMAINED OISICK
 WER: 1.0
 
 Processing: hello-tolga.wav
 Expected transcript: Hello, my name is Tolga
 Resampling from 48000 Hz to 16000 Hz
-Predicted transcript: HELO MY MEN IS TOLD
-WER: 0.6
+Predicted transcript: HELO MY MALE IS TOLD
+WER: 1.0
 
-Overall WER for out-of-sample audio: 0.8
+Overall WER for out-of-sample audio: 1.0
 ----------------------------------------------------------------------------------------------------
