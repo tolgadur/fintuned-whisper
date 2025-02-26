@@ -394,7 +394,6 @@ def train_lora_simple(
         lora_r: Rank of the LoRA update matrices
         lora_alpha: LoRA scaling factor
         lora_dropout: Dropout probability for LoRA layers
-        target_modules: List of modules to apply LoRA to
     """
     # Create output directory
     output_dir = f"models/whisper-lora-r{lora_r}"
@@ -422,6 +421,17 @@ def train_lora_simple(
     # Print trainable parameters info
     model.print_trainable_parameters()
 
+    # Define a custom data collator that filters out unexpected keys
+    def filtered_collate_fn(batch):
+        # First apply the original collate function
+        processed_batch = collate_fn(batch)
+
+        # Keep only the keys that WhisperForConditionalGeneration expects
+        allowed_keys = ["input_features", "attention_mask", "labels"]
+        filtered_batch = {k: v for k, v in processed_batch.items() if k in allowed_keys}
+
+        return filtered_batch
+
     # Define training arguments using Hugging Face's TrainingArguments
     training_args = TrainingArguments(
         output_dir=output_dir,
@@ -436,12 +446,12 @@ def train_lora_simple(
         remove_unused_columns=False,  # Important for audio models
     )
 
-    # Create standard Trainer
+    # Create standard Trainer with the filtered collate function
     trainer = Trainer(
         model=model,
         args=training_args,
         train_dataset=dataset,
-        data_collator=collate_fn,
+        data_collator=filtered_collate_fn,
     )
 
     # Train the model
