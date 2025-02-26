@@ -395,6 +395,7 @@ def train_lora_simple(
         lora_alpha: LoRA scaling factor
         lora_dropout: Dropout probability for LoRA layers
     """
+    output_dir = "models/whisper-lora-final-model"
     # Load dataset
     dataset = LibriSpeechDataset()
     print(f"Loaded {len(dataset)} samples")
@@ -454,6 +455,6 @@ def train_lora_simple(
     trainer.train()
 
     # Save the final model
-    model.save_pretrained("models/whisper-lora-final-model")
+    model.save_pretrained(output_dir)
 
     return model
