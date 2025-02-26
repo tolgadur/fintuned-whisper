@@ -395,7 +395,7 @@ def train_lora_simple(
         lora_alpha: LoRA scaling factor
         lora_dropout: Dropout probability for LoRA layers
     """
-    output_dir = "models/whisper-lora-final-model"
+    output_dir = "models/whisper-lora-simple"
     # Load dataset
     dataset = LibriSpeechDataset()
     print(f"Loaded {len(dataset)} samples")

@@ -93,3 +93,22 @@ WER: 0.6
 
 Overall WER for out-of-sample audio: 0.8
 ----------------------------------------------------------------------------------------------------
+Evaluating model finetuned with LoRA simple
+Loading LoRA model from models/whisper-lora-simple
+
+Evaluating out-of-sample audio files:
+
+Processing: hello-izaak.wav
+Expected transcript: Hello, my name is Izaak
+Resampling from 48000 Hz to 16000 Hz
+Predicted transcript: ROLLOW REMAINED AISICK
+WER: 1.0
+
+Processing: hello-tolga.wav
+Expected transcript: Hello, my name is Tolga
+Resampling from 48000 Hz to 16000 Hz
+Predicted transcript: HULLO MURMAY LITTLE HIS TOULGO
+WER: 1.0
+
+Overall WER for out-of-sample audio: 1.0
+----------------------------------------------------------------------------------------------------
