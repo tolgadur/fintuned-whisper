@@ -10,8 +10,13 @@ from visualize import visualize_log_mel_spectrogram, visualize_hello_izaak
 def main():
     # Uncomment the training method you want to use
     # Training with standard fine-tuning - try with fewer epochs
-    # print("Training with standard fine-tuning...")
-    # train(num_epochs=1)
+    print("Training with standard fine-tuning...")
+    train(
+        batch_size=8,
+        num_epochs=1,
+        learning_rate=1e-4,
+        use_amp=True,
+    )
 
     # Training with LoRA, EWC and KL divergence - recommended approach
     print("Training with LoRA, EWC and KL divergence...")
