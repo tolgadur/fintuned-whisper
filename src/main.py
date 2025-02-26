@@ -12,12 +12,12 @@ def main():
     # train_lora_ewc_kd(num_epochs=1)
 
     # Visualize log mel spectrogram for the first file in the dataset
-    # print("Visualizing log mel spectrogram from LibriSpeech dataset...")
-    # visualize_log_mel_spectrogram()
+    print("Visualizing log mel spectrogram from LibriSpeech dataset...")
+    visualize_log_mel_spectrogram()
 
-    # # Visualize log mel spectrogram for the hello-izaak file
-    # print("\nVisualizing log mel spectrogram for 'hello-izaak.wav'...")
-    # visualize_hello_izaak()
+    # Visualize log mel spectrogram for the hello-izaak file
+    print("\nVisualizing log mel spectrogram for 'hello-izaak.wav'...")
+    visualize_hello_izaak()
 
     # Comment out the following line to evaluate the single datapoint
     # evaluate_single_datapoint(model_path="models/whisper-tiny-librispeech.pth")

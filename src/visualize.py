@@ -45,7 +45,7 @@ def visualize_log_mel_spectrogram():
     plt.colorbar(im, format="%+2.0f dB")
 
     plt.tight_layout()
-    plt.savefig("log_mel_spectrogram.png")
+    plt.savefig("visualize/log_mel_spectrogram.png")
     plt.show()
 
     print(f"Transcript: {transcript}")
@@ -118,7 +118,7 @@ def visualize_hello_izaak():
     )
 
     plt.tight_layout()
-    plt.savefig("hello_izaak_spectrogram.png")
+    plt.savefig("visualize/hello_izaak_spectrogram.png")
     plt.show()
 
     print(f"Audio duration: {duration:.2f} seconds")
