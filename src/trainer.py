@@ -101,9 +101,8 @@ class KLEWCTrainer(Trainer):
     def __init__(
         self,
         teacher_model,
-        kd_weight=0.5,
+        kd_weight=0.1,
         ewc_lambda=100.0,
-        fisher_estimation_sample_size=100,
         **kwargs,
     ):
         """
@@ -122,7 +121,6 @@ class KLEWCTrainer(Trainer):
 
         self.kd_weight = kd_weight
         self.ewc_lambda = ewc_lambda
-        self.fisher_estimation_sample_size = fisher_estimation_sample_size
 
         self.fisher = None
         self.original_params = None
@@ -272,14 +270,13 @@ class KLEWCTrainer(Trainer):
 
 def train_lora_ewc_kd(
     batch_size: int = 16,
-    num_epochs: int = 10,
+    num_epochs: int = 1,
     learning_rate: float = 1e-5,
-    lora_r: int = 4,  # Smaller LoRA rank
+    lora_r: int = 8,
     lora_alpha: int = 16,
     lora_dropout: float = 0.05,
-    kd_weight: float = 0.5,  # Weight for KL divergence loss
-    ewc_lambda: float = 100.0,  # Weight for EWC penalty
-    fisher_estimation_sample_size: int = 100,  # Samples for Fisher estimation
+    kd_weight: float = 0.1,
+    ewc_lambda: float = 100.0,
 ):
     """
     Train the model using LoRA with knowledge distillation and optional EWC
@@ -343,7 +340,6 @@ def train_lora_ewc_kd(
         teacher_model=teacher_model,
         kd_weight=kd_weight,
         ewc_lambda=ewc_lambda,
-        fisher_estimation_sample_size=fisher_estimation_sample_size,
         args=training_args,
         train_dataset=dataset,
         data_collator=collate_fn,

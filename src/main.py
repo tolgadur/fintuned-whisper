@@ -1,10 +1,9 @@
-from trainer import train, train_lora_ewc_kd, train_lora_simple
+from trainer import train_lora_ewc_kd, train_lora_simple
 from utils import (
     evaluate_out_of_sample,
     evaluate_librispeech,
     evaluate_single_datapoint,
 )
-from visualize import visualize_log_mel_spectrogram, visualize_hello_izaak
 
 
 def main():
@@ -20,6 +19,7 @@ def main():
 
     print("Training with LoRA simple...")
     train_lora_simple()
+    train_lora_ewc_kd()
 
     # # Training with LoRA, EWC and KL divergence - recommended approach
     # print("Training with LoRA, EWC and KL divergence...")
@@ -47,26 +47,26 @@ def main():
     # evaluate_single_datapoint(model_path="models/whisper-tiny-lora-kd-ewc")
     # evaluate_single_datapoint(model_path="models/whisper-tiny-lora-kd-ewc")
 
-    # print("Evaluating...")
+    print("Evaluating...")
     # print("Evaluating regular non-fined tuned model")
     # evaluate_out_of_sample()
     # print("-" * 100)
 
     # print("Evaluating model finetuned with one epoch")
-    # evaluate_out_of_sample(model_path="models/whisper-tiny-librispeech-epoch-1-2.pth")
+    # evaluate_out_of_sample(model_path="models/whisper-tiny-librispeech-epoch-1.pth")
     # print("-" * 100)
 
     # print("Evaluating model finetuned with five epochs")
     # evaluate_out_of_sample(model_path="models/whisper-tiny-librispeech-epoch-4.pth")
     # print("-" * 100)
 
-    # print("Evaluating model finetuned with LoRA and KL divergence five epochs")
+    # print("Evaluating model finetuned with LoRA and KL divergence")
     # evaluate_out_of_sample(model_path="models/whisper-tiny-lora-kd")
     # print("-" * 100)
 
-    # print("Evaluating model finetuned with LoRA, KL divergence, and EWC combined")
-    # evaluate_out_of_sample(model_path="models/whisper-tiny-lora-kd-ewc-2")
-    # print("-" * 100)
+    print("Evaluating model finetuned with LoRA, KL divergence, and EWC")
+    evaluate_out_of_sample(model_path="models/whisper-tiny-lora-kd-ewc")
+    print("-" * 100)
 
     print("Evaluating model finetuned with LoRA simple")
     evaluate_out_of_sample(model_path="models/whisper-lora-simple")
