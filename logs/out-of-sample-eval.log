@@ -1,3 +1,4 @@
+You have passed task=transcribe, but also have set `forced_decoder_ids` to [(1, 50259), (2, 50359), (3, 50363)] which creates a conflict. `forced_decoder_ids` will be ignored in favor of task=transcribe.
 Evaluating...
 Evaluating regular non-fined tuned model
 
@@ -18,7 +19,7 @@ WER: 0.2
 Overall WER for out-of-sample audio: 0.2
 ----------------------------------------------------------------------------------------------------
 Evaluating model finetuned with one epoch
-Loading standard model from models/whisper-tiny-librispeech-epoch-1-2.pth
+Loading standard model from models/whisper-tiny-librispeech-epoch-1.pth
 
 Evaluating out-of-sample audio files:
 
@@ -55,7 +56,7 @@ WER: 0.6
 
 Overall WER for out-of-sample audio: 0.8
 ----------------------------------------------------------------------------------------------------
-Evaluating model finetuned with LoRA and KL divergence five epochs
+Evaluating model finetuned with LoRA and KL divergence
 Loading LoRA model from models/whisper-tiny-lora-kd
 
 Evaluating out-of-sample audio files:
@@ -63,35 +64,35 @@ Evaluating out-of-sample audio files:
 Processing: hello-izaak.wav
 Expected transcript: Hello, my name is Izaak
 Resampling from 48000 Hz to 16000 Hz
-Predicted transcript: RELOR REMAINED AISICK
-WER: 1.0
+Predicted transcript:  Hello, my name's Isaac.
+WER: 0.6
 
 Processing: hello-tolga.wav
 Expected transcript: Hello, my name is Tolga
 Resampling from 48000 Hz to 16000 Hz
-Predicted transcript: HULLO MURMAY LITTLE IS TOLD THE
-WER: 1.0
+Predicted transcript:  Hello, my name is Tolga.
+WER: 0.2
 
-Overall WER for out-of-sample audio: 1.0
+Overall WER for out-of-sample audio: 0.4
 ----------------------------------------------------------------------------------------------------
-Evaluating model finetuned with LoRA, KL divergence, and EWC combined
-Loading LoRA model from models/whisper-tiny-lora-kd-ewc-2
+Evaluating model finetuned with LoRA, KL divergence, and EWC
+Loading LoRA model from models/whisper-tiny-lora-kd-ewc
 
 Evaluating out-of-sample audio files:
 
 Processing: hello-izaak.wav
 Expected transcript: Hello, my name is Izaak
 Resampling from 48000 Hz to 16000 Hz
-Predicted transcript: RELOR REMAINED AISICK
-WER: 1.0
+Predicted transcript:  Hello, my name is Isaac.
+WER: 0.2
 
 Processing: hello-tolga.wav
 Expected transcript: Hello, my name is Tolga
 Resampling from 48000 Hz to 16000 Hz
-Predicted transcript: HELO MY MEN IS TOLD
-WER: 0.6
+Predicted transcript:  Hello, my name is Tolga.
+WER: 0.2
 
-Overall WER for out-of-sample audio: 0.8
+Overall WER for out-of-sample audio: 0.2
 ----------------------------------------------------------------------------------------------------
 Evaluating model finetuned with LoRA simple
 Loading LoRA model from models/whisper-lora-simple
@@ -101,14 +102,14 @@ Evaluating out-of-sample audio files:
 Processing: hello-izaak.wav
 Expected transcript: Hello, my name is Izaak
 Resampling from 48000 Hz to 16000 Hz
-Predicted transcript: ROLLOW REMAINED AISICK
-WER: 1.0
+Predicted transcript:  hello my name is Isaac
+WER: 0.4
 
 Processing: hello-tolga.wav
 Expected transcript: Hello, my name is Tolga
 Resampling from 48000 Hz to 16000 Hz
-Predicted transcript: HULLO MURMAY LITTLE HIS TOULGO
-WER: 1.0
+Predicted transcript:  hello my name is Tolga
+WER: 0.2
 
-Overall WER for out-of-sample audio: 1.0
+Overall WER for out-of-sample audio: 0.3
 ----------------------------------------------------------------------------------------------------
