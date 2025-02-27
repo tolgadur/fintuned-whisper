@@ -1,5 +1,5 @@
 import evaluate
-from config import MODEL, PROCESSOR, DEVICE
+from config import PROCESSOR, DEVICE, load_new_model
 from dataset import LibriSpeechDataset
 import torch
 from torch.utils.data import DataLoader
@@ -19,6 +19,9 @@ def load_model(model_path=None):
     Returns:
         The loaded model on the correct device.
     """
+    # Always start with a fresh model instance
+    model = load_new_model().to(DEVICE)
+
     if model_path:
         # Check if this is a LoRA model
         adapter_path = os.path.join(model_path, "adapter_config.json")
@@ -29,17 +32,13 @@ def load_model(model_path=None):
         if is_lora_model:
             print(f"Loading LoRA model from {model_path}")
             # Load the LoRA model
-            model = MODEL.to(DEVICE)
             model = PeftModel.from_pretrained(model, model_path)
             # Merge the LoRA weights for inference
             model = model.merge_and_unload()
         else:
             print(f"Loading standard model from {model_path}")
             model_state = torch.load(model_path, map_location=torch.device(DEVICE))
-            MODEL.load_state_dict(model_state)
-            model = MODEL.to(DEVICE)
-    else:
-        model = MODEL.to(DEVICE)
+            model.load_state_dict(model_state)
 
     model.eval()
     return model
