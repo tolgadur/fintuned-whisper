@@ -17,9 +17,9 @@ def main():
     #     use_amp=True,
     # )
 
-    print("Training with LoRA simple...")
-    train_lora_simple()
-    train_lora_ewc_kd()
+    # print("Training with LoRA simple...")
+    # train_lora_simple()
+    # train_lora_ewc_kd()
 
     # # Training with LoRA, EWC and KL divergence - recommended approach
     # print("Training with LoRA, EWC and KL divergence...")
@@ -48,21 +48,21 @@ def main():
     # evaluate_single_datapoint(model_path="models/whisper-tiny-lora-kd-ewc")
 
     print("Evaluating...")
-    # print("Evaluating regular non-fined tuned model")
-    # evaluate_out_of_sample()
-    # print("-" * 100)
+    print("Evaluating regular non-fined tuned model")
+    evaluate_out_of_sample()
+    print("-" * 100)
 
-    # print("Evaluating model finetuned with one epoch")
-    # evaluate_out_of_sample(model_path="models/whisper-tiny-librispeech-epoch-1.pth")
-    # print("-" * 100)
+    print("Evaluating model finetuned with one epoch")
+    evaluate_out_of_sample(model_path="models/whisper-tiny-librispeech-epoch-1.pth")
+    print("-" * 100)
 
-    # print("Evaluating model finetuned with five epochs")
-    # evaluate_out_of_sample(model_path="models/whisper-tiny-librispeech-epoch-4.pth")
-    # print("-" * 100)
+    print("Evaluating model finetuned with five epochs")
+    evaluate_out_of_sample(model_path="models/whisper-tiny-librispeech-epoch-4.pth")
+    print("-" * 100)
 
-    # print("Evaluating model finetuned with LoRA and KL divergence")
-    # evaluate_out_of_sample(model_path="models/whisper-tiny-lora-kd")
-    # print("-" * 100)
+    print("Evaluating model finetuned with LoRA and KL divergence")
+    evaluate_out_of_sample(model_path="models/whisper-tiny-lora-kd")
+    print("-" * 100)
 
     print("Evaluating model finetuned with LoRA, KL divergence, and EWC")
     evaluate_out_of_sample(model_path="models/whisper-tiny-lora-kd-ewc")
