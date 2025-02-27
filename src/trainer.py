@@ -15,7 +15,7 @@ from config import load_new_model
 def train(
     batch_size: int = 16,
     num_epochs: int = 10,
-    learning_rate: float = 1e-4,
+    learning_rate: float = 1e-5,
     use_amp: bool = True,
 ):
     # Create models directory if it doesn't exist
@@ -279,7 +279,7 @@ class KLEWCTrainer(Trainer):
 def train_lora_ewc_kd(
     batch_size: int = 16,
     num_epochs: int = 10,
-    learning_rate: float = 1e-4,
+    learning_rate: float = 1e-5,
     use_amp: bool = True,
     lora_r: int = 4,  # Smaller LoRA rank
     lora_alpha: int = 16,
@@ -377,7 +377,7 @@ def train_lora_ewc_kd(
 def train_lora_simple(
     batch_size: int = 8,
     num_epochs: int = 1,
-    learning_rate: float = 1e-4,
+    learning_rate: float = 1e-5,
     use_amp: bool = True,
     lora_r: int = 8,
     lora_alpha: int = 16,
