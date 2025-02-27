@@ -73,7 +73,6 @@ def train(
                 optimizer.step()
 
             epoch_loss += loss.item()
-
             print(f"Loss: {loss.item()}")
 
         # Print epoch summary
@@ -101,9 +100,8 @@ class KLEWCTrainer(Trainer):
 
     def __init__(
         self,
-        teacher_model=None,
+        teacher_model,
         kd_weight=0.5,
-        use_ewc=False,
         ewc_lambda=100.0,
         fisher_estimation_sample_size=100,
         **kwargs,
@@ -114,58 +112,46 @@ class KLEWCTrainer(Trainer):
         Args:
             teacher_model: The teacher model to distill knowledge from
             kd_weight: Weight for KL divergence loss (between 0 and 1)
-            use_ewc: Whether to use Elastic Weight Consolidation
             ewc_lambda: Weight for the EWC penalty term
             fisher_estimation_sample_size: Number of samples for Fisher estimation
             **kwargs: Additional arguments passed to the Trainer constructor
         """
         super().__init__(**kwargs)
         self.teacher_model = teacher_model
+        self.teacher_model.eval()
+
         self.kd_weight = kd_weight
-        self.use_ewc = use_ewc
         self.ewc_lambda = ewc_lambda
         self.fisher_estimation_sample_size = fisher_estimation_sample_size
+
         self.fisher = None
         self.original_params = None
-
-        # Ensure teacher model is in eval mode
-        if self.teacher_model is not None:
-            self.teacher_model.eval()
 
     def compute_fisher_information_matrix(self):
         """
         Compute the Fisher Information Matrix, which represents parameter importance.
         """
-        if not self.use_ewc:
-            return None
-
-        print("Computing Fisher Information Matrix...")
-        dataset_length = len(self.train_dataset)
-        sample_size = min(self.fisher_estimation_sample_size, dataset_length)
-
-        # Create a small dataloader for Fisher estimation
+        # Create a dataloader that uses the entire dataset
         fisher_dataloader = torch.utils.data.DataLoader(
             self.train_dataset,
             batch_size=1,  # Process one sample at a time
-            sampler=torch.utils.data.RandomSampler(
-                self.train_dataset, num_samples=sample_size, replacement=False
-            ),
+            shuffle=False,  # No need to shuffle, we're using the entire dataset
             collate_fn=self.data_collator,
         )
 
+        # Get total number of samples for averaging
+        dataset_size = len(self.train_dataset)
+
         # Initialize Fisher matrix and store original parameters
-        fisher = {}
+        self.fisher = {}
         self.original_params = {}
 
         for name, param in self.model.named_parameters():
-            # Only track non-LoRA parameters that require gradients
-            is_lora_param = "lora" in name
-            if param.requires_grad and not is_lora_param:
-                fisher[name] = torch.zeros_like(param, device=param.device)
+            if param.requires_grad:
+                self.fisher[name] = torch.zeros_like(param, device=param.device)
                 self.original_params[name] = param.data.clone()
 
         # Set model to evaluation mode for Fisher calculation
-        was_training = self.model.training
         self.model.eval()
 
         # Compute Fisher Information Matrix
@@ -187,18 +173,51 @@ class KLEWCTrainer(Trainer):
 
             # Accumulate squared gradients in the Fisher matrix
             for name, param in self.model.named_parameters():
-                if name in fisher and param.grad is not None:
-                    fisher[name] += param.grad.pow(2).detach() / sample_size
-
-        # Store the computed Fisher matrix
-        self.fisher = fisher
+                if param.requires_grad:
+                    self.fisher[name] += param.grad.pow(2).detach() / dataset_size
 
         # Restore model's training state
-        if was_training:
-            self.model.train()
+        self.model.train()
 
-        print(f"Fisher Information Matrix computed for {len(fisher)} parameters.")
-        return fisher
+        print(f"Fisher Information Matrix computed for {len(self.fisher)} parameters.")
+        return self.fisher
+
+    def compute_ewc_loss(self, model):
+        """
+        Compute the EWC loss term.
+
+        Args:
+            model: The current model with updated parameters
+
+        Returns:
+            The computed EWC loss
+        """
+        loss_ewc = 0.0
+        for name, param in model.named_parameters():
+            if param.requires_grad:
+                delta = param - self.original_params[name]
+                loss_ewc += (self.fisher[name] * delta.pow(2)).sum()
+        return loss_ewc
+
+    def compute_kl_loss(self, student_logits, teacher_logits):
+        """
+        Compute KL divergence loss between student and teacher logits.
+
+        Args:
+            student_logits: Logits from the student model
+            teacher_logits: Logits from the teacher model
+
+        Returns:
+            KL divergence loss
+        """
+        student_log_probs = F.log_softmax(student_logits, dim=-1)
+        teacher_probs = F.softmax(teacher_logits, dim=-1)
+
+        return F.kl_div(
+            student_log_probs.view(-1, student_log_probs.size(-1)),
+            teacher_probs.view(-1, teacher_probs.size(-1)),
+            reduction="batchmean",
+        )
 
     def compute_loss(
         self,
@@ -208,7 +227,7 @@ class KLEWCTrainer(Trainer):
         num_items_in_batch=None,
     ):
         """
-        Compute the combined loss: CE loss + KL divergence loss + optional EWC penalty.
+        Compute the combined loss: CE loss + KL regularization + EWC regularization.
 
         Args:
             model: The student model
@@ -227,12 +246,9 @@ class KLEWCTrainer(Trainer):
         }
 
         outputs = model(**model_inputs)
-        ce_loss = outputs.loss
+        combined_loss = outputs.loss  # Start with CE loss
 
-        # Initialize combined loss with CE loss
-        combined_loss = ce_loss
-
-        # Add KL divergence if teacher model is available
+        # Add KL divergence regularization if teacher model is available
         if self.teacher_model is not None and self.kd_weight > 0:
             # Get teacher logits (no grad needed)
             with torch.no_grad():
@@ -241,36 +257,14 @@ class KLEWCTrainer(Trainer):
                     self.teacher_model = self.teacher_model.to(model.device)
 
                 teacher_outputs = self.teacher_model(**model_inputs)
-                teacher_logits = teacher_outputs.logits
 
-            # KL divergence loss between teacher and student logits
-            student_log_probs = F.log_softmax(outputs.logits, dim=-1)
-            teacher_probs = F.softmax(teacher_logits, dim=-1)
+            # Add KL divergence as regularization
+            kd_loss = self.compute_kl_loss(outputs.logits, teacher_outputs.logits)
+            combined_loss = combined_loss + self.kd_weight * kd_loss
 
-            # Calculate KL divergence loss
-            kd_loss = F.kl_div(
-                student_log_probs.view(-1, student_log_probs.size(-1)),
-                teacher_probs.view(-1, teacher_probs.size(-1)),
-                reduction="batchmean",
-            )
-
-            # Combine CE and KL losses
-            combined_loss = (1 - self.kd_weight) * ce_loss + self.kd_weight * kd_loss
-
-        # Add EWC penalty if enabled and Fisher information is available
-        ewc_loss = 0.0
-        if (
-            self.use_ewc
-            and self.fisher is not None
-            and self.original_params is not None
-        ):
-            for name, param in model.named_parameters():
-                if name in self.fisher and name in self.original_params:
-                    # Calculate squared distance from original parameters
-                    delta = param - self.original_params[name]
-                    ewc_loss += (self.fisher[name] * delta.pow(2)).sum()
-
-            # Add the weighted EWC penalty to the combined loss
+        # Add EWC regularization if enabled
+        if self.fisher is not None and self.original_params is not None:
+            ewc_loss = self.compute_ewc_loss(model)
             combined_loss += (self.ewc_lambda / 2) * ewc_loss
 
         return (combined_loss, outputs) if return_outputs else combined_loss
@@ -280,12 +274,10 @@ def train_lora_ewc_kd(
     batch_size: int = 16,
     num_epochs: int = 10,
     learning_rate: float = 1e-5,
-    use_amp: bool = True,
     lora_r: int = 4,  # Smaller LoRA rank
     lora_alpha: int = 16,
     lora_dropout: float = 0.05,
     kd_weight: float = 0.5,  # Weight for KL divergence loss
-    use_ewc: bool = True,  # Whether to use EWC
     ewc_lambda: float = 100.0,  # Weight for EWC penalty
     fisher_estimation_sample_size: int = 100,  # Samples for Fisher estimation
 ):
@@ -297,19 +289,15 @@ def train_lora_ewc_kd(
         batch_size: Batch size for training
         num_epochs: Number of epochs to train
         learning_rate: Learning rate for optimizer
-        use_amp: Whether to use automatic mixed precision
         lora_r: Rank of the LoRA update matrices
         lora_alpha: LoRA scaling factor
         lora_dropout: Dropout probability for LoRA layers
         kd_weight: Weight for KL divergence loss (0-1)
-        use_ewc: Whether to use Elastic Weight Consolidation
         ewc_lambda: Weight for EWC penalty
         fisher_estimation_sample_size: Number of samples for Fisher estimation
     """
     # Create output directory
-    output_dir = "models/whisper-tiny-lora-kd"
-    if use_ewc:
-        output_dir += "-ewc"
+    output_dir = "models/whisper-tiny-lora-kd-ewc"
     os.makedirs(output_dir, exist_ok=True)
 
     # Load dataset
@@ -345,7 +333,7 @@ def train_lora_ewc_kd(
         num_train_epochs=num_epochs,
         logging_steps=10,
         save_strategy="no",
-        fp16=use_amp and DEVICE == "cuda",
+        fp16=DEVICE == "cuda",
         report_to="none",
     )
 
@@ -354,7 +342,6 @@ def train_lora_ewc_kd(
         model=student_model,
         teacher_model=teacher_model,
         kd_weight=kd_weight,
-        use_ewc=use_ewc,
         ewc_lambda=ewc_lambda,
         fisher_estimation_sample_size=fisher_estimation_sample_size,
         args=training_args,
@@ -362,14 +349,9 @@ def train_lora_ewc_kd(
         data_collator=collate_fn,
     )
 
-    # Compute Fisher Information Matrix if using EWC
-    if use_ewc:
-        trainer.compute_fisher_information_matrix()
-
-    # Train the model
+    trainer.compute_fisher_information_matrix()
     trainer.train()
 
-    # Save the LoRA model properly
     student_model.save_pretrained(output_dir)
     return student_model
 
