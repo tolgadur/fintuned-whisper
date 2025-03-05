@@ -1,89 +1,60 @@
-# Whisper Fine-Tuning
+# Whisper Fine-Tuning Experiment
 
-A project for fine-tuning OpenAI's Whisper model on the LibriSpeech dataset for improved speech recognition.
+This project explores the tradeoff between dataset-specific performance and generalizability when fine-tuning OpenAI's Whisper speech recognition model.
 
-## Overview
+## Experiment Overview
 
-This project provides tools to fine-tune the Whisper speech recognition model on the LibriSpeech dataset. It includes functionality for training, evaluation, and inference.
+The goal of this experiment was to improve Whisper's performance on the LibriSpeech dataset while observing how different fine-tuning approaches affect generalizability to out-of-sample audio.
 
-## Features
+## Key Findings
 
-- Fine-tune Whisper models on LibriSpeech dataset
-- Evaluate model performance on LibriSpeech test sets
-- Calculate Word Error Rate (WER) metrics
-- Support for mixed precision training
-- Single datapoint evaluation for quick testing
+### LibriSpeech Performance Improvement
+
+Fine-tuning successfully reduced Word Error Rate (WER) on the LibriSpeech dataset:
+
+- The base model achieved a WER of ~0.19 on test-clean and ~0.27 on test-other
+- Fine-tuning with just one epoch significantly improved performance
+- Further epochs continued to reduce WER on the target dataset
+
+### Generalizability Problem
+
+However, as shown in `logs/old-logs/out-of-sample-eval.log`, the fine-tuned models completely lost their ability to transcribe simple English phrases outside the training distribution:
+
+- **Base model** (no fine-tuning):
+  - Successfully transcribed "Hello, my name is Izaak" and "Hello, my name is Tolga"
+  - Overall WER: 0.4
+
+- **Fine-tuned models** (standard approach):
+  - Failed to transcribe simple phrases, producing outputs like "HELLO MY MAIMS ISICK"
+  - Overall WER increased dramatically to 1.0-1.1
+
+### Mitigation Strategies
+
+To address catastrophic forgetting, several techniques were implemented:
+
+- **LoRA** (Low-Rank Adaptation): Fine-tuning only a small set of parameters
+- **KL Divergence**: Keeping model outputs close to the original model
+- **EWC** (Elastic Weight Consolidation): Preserving important parameters for general tasks
+
+These techniques successfully retained knowledge on the small out-of-sample dataset, demonstrating effective approaches to balance domain-specific performance improvements with general language capabilities.
+
+## Visualization
+
+The project includes code to visualize log-mel spectrograms of audio inputs, providing insights into how the model processes speech data. Example visualizations can be found in the `visualize/` directory.
 
 ## Project Structure
 
 ```
 whisper/
 ├── data/                # LibriSpeech dataset (downloaded automatically)
-├── logs/                # Training logs
-├── models/              # Saved model checkpoints (not included in repo)
-├── src/
+├── logs/                # Training and evaluation logs
+├── models/              # Saved model checkpoints
+├── src/                 # Source code
 │   ├── config.py        # Configuration settings
 │   ├── dataset.py       # LibriSpeech dataset loader
 │   ├── main.py          # Main entry point
 │   ├── trainer.py       # Training functionality
 │   ├── utils.py         # Evaluation utilities
-│   ├── example_huggingface.py  # Example using HuggingFace
-│   └── example_official.py     # Example using official Whisper
-└── requirements.txt     # Project dependencies
+│   └── visualize.py     # Spectogram visualization
+└── visualize/           # Generated spectogram images
 ```
-
-## Usage
-
-### Training
-
-To fine-tune the Whisper model on LibriSpeech:
-
-```python
-from src.trainer import train
-
-# Start training with default parameters
-train()
-
-# Or customize training parameters
-train(
-    batch_size=16,
-    num_epochs=10,
-    learning_rate=1e-4,
-    use_amp=True
-)
-```
-
-### Evaluation
-
-To evaluate the model on LibriSpeech test sets:
-
-```python
-from src.utils import evaluate_librispeech
-
-# Evaluate using a fine-tuned model
-evaluate_librispeech(model_path="models/whisper-tiny-librispeech.pth")
-```
-
-To evaluate on a single datapoint:
-
-```python
-from src.utils import evaluate_single_datapoint
-
-# Test on a single example
-evaluate_single_datapoint(model_path="models/whisper-tiny-librispeech.pth")
-```
-
-## Model
-
-This project uses the "whisper-tiny" model by default, but you can modify `config.py` to use other Whisper model variants:
-- whisper-tiny
-- whisper-base
-- whisper-small
-- whisper-medium
-- whisper-large
-
-## Acknowledgements
-
-- [OpenAI Whisper](https://github.com/openai/whisper)
-- [LibriSpeech Dataset](https://www.openslr.org/12)
-- [Hugging Face Transformers](https://huggingface.co/transformers/)
